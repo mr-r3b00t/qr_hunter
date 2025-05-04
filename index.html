@@ -178,9 +178,9 @@
 
         // Clear log
         function clearLog() {
-            log.length = 0; // Clear the log array
-            logActivity.innerHTML = ''; // Clear the log activity section
-            updateQrCounter(); // Update the counter to 0
+            log.length = 0;
+            logActivity.innerHTML = '';
+            updateQrCounter();
             output.textContent = 'Log cleared. Scanning for QR code...';
         }
 
@@ -228,7 +228,7 @@
             canvas.width = 320;
             canvas.height = 240;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', 0.5); // JPEG with 50% quality
+            return canvas.toDataURL('image/jpeg', 0.5);
         }
 
         // Scan QR code
@@ -277,8 +277,9 @@
             setTimeout(() => requestAnimationFrame(scanQrCode), 3000);
         }
 
-        // Update log activity section
+        // Update log activity section with conditional auto-scroll
         function updateLogActivity(logEntry) {
+            const isScrolledToBottom = logActivity.scrollHeight - logActivity.clientHeight <= logActivity.scrollTop + 1;
             const entryDiv = document.createElement('div');
             entryDiv.className = 'log-entry';
             entryDiv.innerHTML = `
@@ -287,7 +288,9 @@
                 <span><strong>Location:</strong> (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})</span>
             `;
             logActivity.appendChild(entryDiv);
-            logActivity.scrollTop = logActivity.scrollHeight;
+            if (isScrolledToBottom) {
+                logActivity.scrollTop = logActivity.scrollHeight;
+            }
         }
 
         // Load log from JSON file
@@ -308,10 +311,10 @@
                             typeof entry.geolocation.longitude !== 'number') {
                             throw new Error('Invalid log entry format');
                         }
-                        // Allow optional imageBase64 field
                         log.push(entry);
                         updateLogActivity(entry);
                     }
+                    logActivity.scrollTop = logActivity.scrollHeight;
                     updateQrCounter();
                     output.textContent = `Loaded ${loadedLog.length} log entries. Scanning for QR code...`;
                 } catch (err) {
