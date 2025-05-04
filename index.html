@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        #logActivity {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        .log-entry {
+            border-bottom: 1px solid #eee;
+            padding: 5px 0;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        button, input[type="file"] {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover, input[type="file"]:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <video id="video" autoplay playsinline></video>
+    <div id="output">Scanning for QR code...</div>
+    <h2>Log Activity</h2>
+    <div id="logActivity"></div>
+    <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
+    <button onclick="saveLogToJson()">Save Log to JSON</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const output = document.getElementById('output');
+        const logActivity = document.getElementById('logActivity');
+        const log = [];
+
+        // Start the camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                output.textContent = 'Error accessing camera: ' + err.message;
+            }
+        }
+
+        // Get geolocation
+        async function getGeolocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation not supported');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }),
+                    (err) => reject('Geolocation error: ' + err.message)
+                );
+            });
+        }
+
+        // Scan QR code
+        function scanQRCode() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                processQRCode(code.data);
+            } else {
+                output.textContent = 'No QR code detected. Keep scanning...';
+                requestAnimationFrame(scanQRCode);
+            }
+        }
+
+        // Process detected QR code
+        async function processQRCode(url) {
+            try {
+                const geo = await getGeolocation();
+                const timestamp = new Date().toISOString();
+                const logEntry = {
+                    url,
+                    timestamp,
+                    geolocation: geo
+                };
+                log.push(logEntry);
+                output.textContent = `Scanned QR Code:\nURL: ${url}\nTime: ${timestamp}\nLocation: (${geo.latitude}, ${geo.longitude})`;
+                updateLogActivity(logEntry);
+                console.log('Log entry added:', logEntry);
+            } catch (err) {
+                output.textContent = err;
+            }
+            setTimeout(() => requestAnimationFrame(scanQRCode), 1000); // Delay before next scan
+        }
+
+        // Update log activity section
+        function updateLogActivity(logEntry) {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'log-entry';
+            entryDiv.textContent = `URL: ${logEntry.url}, Time: ${logEntry.timestamp}, Location: (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})`;
+            logActivity.appendChild(entryDiv);
+            logActivity.scrollTop = logActivity.scrollHeight; // Autoscroll to bottom
+        }
+
+        // Load log from JSON file
+        function loadLogFromJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedLog = JSON.parse(e.target.result);
+                    if (!Array.isArray(loadedLog)) {
+                        throw new Error('Invalid JSON format: Must be an array');
+                    }
+                    // Validate each log entry
+                    for (const entry of loadedLog) {
+                        if (!entry.url || !entry.timestamp || !entry.geolocation || 
+                            typeof entry.geolocation.latitude !== 'number' || 
+                            typeof entry.geolocation.longitude !== 'number') {
+                            throw new Error('Invalid log entry format');
+                        }
+                        log.push(entry);
+                        updateLogActivity(entry);
+                    }
+                    output.textContent = `Loaded ${loadedLog.length} log entries. Scanning for QR code...`;
+                } catch (err) {
+                    output.textContent = 'Error loading JSON: ' + err.message;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Save log to JSON file
+        function saveLogToJson() {
+            if (log.length === 0) {
+                alert('No log entries to save.');
+                return;
+            }
+            const json = JSON.stringify(log, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qr_scan_log_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        startCamera();
+        video.addEventListener('loadedmetadata', () => {
+            requestAnimationFrame(scanQRCode);
+        });
+    </script>
+</body>
+</html>
