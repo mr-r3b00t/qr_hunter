@@ -122,10 +122,9 @@
             padding: 10px;
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin; /* For Firefox */
-            scrollbar-color: #888 #f1f1f1; /* For Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
         }
-        /* For WebKit browsers (Chrome, Safari) */
         #logActivity::-webkit-scrollbar {
             width: 10px;
         }
@@ -292,16 +291,36 @@
             setTimeout(() => requestAnimationFrame(scanQrCode), 3000);
         }
 
-        // Update log activity section with conditional auto-scroll
+        // Update log activity section with safe DOM manipulation
         function updateLogActivity(logEntry) {
             const isScrolledToBottom = logActivity.scrollHeight - logActivity.clientHeight <= logActivity.scrollTop + 1;
             const entryDiv = document.createElement('div');
             entryDiv.className = 'log-entry';
-            entryDiv.innerHTML = `
-                <span><strong>URL:</strong> ${logEntry.url}</span>
-                <span><strong>Time:</strong> ${logEntry.timestamp}</span>
-                <span><strong>Location:</strong> (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})</span>
-            `;
+
+            // Create URL span safely
+            const urlSpan = document.createElement('span');
+            const urlStrong = document.createElement('strong');
+            urlStrong.textContent = 'URL:';
+            urlSpan.appendChild(urlStrong);
+            urlSpan.appendChild(document.createTextNode(' ' + logEntry.url));
+            entryDiv.appendChild(urlSpan);
+
+            // Create Time span safely
+            const timeSpan = document.createElement('span');
+            const timeStrong = document.createElement('strong');
+            timeStrong.textContent = 'Time:';
+            timeSpan.appendChild(timeStrong);
+            timeSpan.appendChild(document.createTextNode(' ' + logEntry.timestamp));
+            entryDiv.appendChild(timeSpan);
+
+            // Create Location span safely
+            const locationSpan = document.createElement('span');
+            const locationStrong = document.createElement('strong');
+            locationStrong.textContent = 'Location:';
+            locationSpan.appendChild(locationStrong);
+            locationSpan.appendChild(document.createTextNode(` (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})`));
+            entryDiv.appendChild(locationSpan);
+
             logActivity.appendChild(entryDiv);
             if (isScrolledToBottom) {
                 logActivity.scrollTop = logActivity.scrollHeight;
