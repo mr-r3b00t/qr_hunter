@@ -8,190 +8,80 @@
     <style>
         body {
             font-family: -apple-system, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            min-height: 100vh;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding-bottom: 280px; /* Space for fixed log and counter */
+            -webkit-text-size-adjust: 100%;
+        }
+        header {
+            width: 100%;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 500;
+        }
+        header h1 {
             margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .main-content {
+            width: 100%;
+            max-width: 400px;
             padding: 20px;
-            background-color: #f0f0f0;
-            min-height: 100vh;
             box-sizing: border-box;
-            padding-bottom: 280px; /* Space for fixed log activity and counter */
-            -webkit-text-size-adjust: 100%; /* Prevent font scaling issues */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
         }
         video {
             width: 100%;
             max-width: 400px;
             border: 2px solid #333;
             border-radius: 8px;
+            background-color: #000;
             display: block;
         }
         #output {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: white;
+            padding: 12px;
+            background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 400px;
             text-align: center;
-            box-sizing: border-box;
-        }
-        #logActivity {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px;
-            background-color: white;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            height: 200px;
-            overflow-y: auto;
             font-size: 14px;
-            z-index: 1000;
-            border: 1px solid #ddd;
+            color: #333;
             box-sizing: border-box;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
-        .log-entry {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
+        .controls {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            color: #333;
-        }
-        .log-entry:last-child {
-            border-bottom: none;
-        }
-        .log-entry span {
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        #qrCounter {
-            position: fixed;
-            bottom: 220px;
-            left: 50%;
-            transform: translateX(-50%);
+            gap: 10px;
             width: 100%;
-            max-width: 400px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            background-color: white;
-            padding: 5px;
-            border-radius: 4px;
-            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
-            z-index: 100 As you requested, I’ve updated the QR code scanner app to ensure it works seamlessly on iPhone in Safari. Below is the complete HTML artifact with adjustments for iOS compatibility, including optimized camera access, touch-friendly UI, smooth scrolling, and proper viewport handling. The log activity section remains fixed at the bottom, with a fixed size (400px width, 200px height), autoscrolling, and a QR code counter, while all core functionality (QR scanning, 3-second delay, JSON loading/saving, and geolocation) is preserved.
-
-<xaiArtifact artifact_id="6a8661fb-c572-4e3d-8c36-a6b2d833f664" artifact_version_id="115d9a89-d371-4f37-ad77-31cdc7396f61" title="index.html" contentType="text/html">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>QR Code Scanner</title>
-    <style>
-        body {
-            font-family: -apple-system, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
-            min-height: 100vh;
-            box-sizing: border-box;
-            padding-bottom: 280px; /* Space for fixed log activity and counter */
-            -webkit-text-size-adjust: 100%; /* Prevent font scaling issues */
-        }
-        video {
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            display: block;
-        }
-        #output {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        #logActivity {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px;
-            background-color: white;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            height: 200px;
-            overflow-y: auto;
-            font-size: 14px;
-            z-index: 1000;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-        }
-        .log-entry {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #333;
-        }
-        .log-entry:last-child {
-            border-bottom: none;
-        }
-        .log-entry span {
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        #qrCounter {
-            position: fixed;
-            bottom: 220px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            background-color: white;
-            padding: 5px;
-            border-radius: 4px;
-            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
-            z-index: 1000;
-            box-sizing: border-box;
         }
         button, input[type="file"]::file-selector-button {
-            margin-top: 10px;
             padding: 12px 24px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            touch-action: manipulation; /* Improve touch responsiveness */
+            width: 100%;
+            max-width: 200px;
+            text-align: center;
+            touch-action: manipulation;
         }
         button:active, input[type="file"]::file-selector-button:active {
             background-color: #0056b3;
@@ -199,22 +89,81 @@
         input[type="file"] {
             padding: 10px;
             width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
+        }
+        #logActivity {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: #ffffff;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            width: 100%;
             max-width: 400px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #333;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-entry span {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        #qrCounter {
+            position: fixed;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            background-color: #ffffff;
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+            z-index: 1000;
             box-sizing: border-box;
         }
         @media (max-width: 440px) {
-            #logActivity, #qrCounter, video, #output, button, input[type="file"] {
-                max-width: calc(100% - 40px); /* Adjust for padding */
+            .main-content, #logActivity, #qrCounter, video, #output, .controls {
+                max-width: calc(100% - 40px);
             }
         }
     </style>
 </head>
 <body>
-    <h1>QR Code Scanner</h1>
-    <video id="video" autoplay playsinline></video>
-    <div id="output">Scanning for QR code...</div>
-    <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
-    <button onclick="saveLogToJson()">Save Log to JSON</button>
+    <header>
+        <h1>QR Code Scanner</h1>
+    </header>
+    <div class="main-content">
+        <video id="video" autoplay playsinline></video>
+        <div id="output">Scanning for QR code...</div>
+        <div class="controls">
+            <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
+            <button onclick="saveLogToJson()">Save Log to JSON</button>
+        </div>
+    </div>
     <div id="qrCounter">QR Codes Scanned: 0</div>
     <div id="logActivity"></div>
 
@@ -242,7 +191,7 @@
                     } 
                 });
                 video.srcObject = stream;
-                video.playsinline = true; // Ensure video plays inline on iOS
+                video.playsinline = true;
             } catch (err) {
                 output.textContent = 'Error accessing camera: ' + err.message;
             }
@@ -275,7 +224,7 @@
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+ższego
 
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -307,7 +256,7 @@
             } catch (err) {
                 output.textContent = err;
             }
-            setTimeout(() => requestAnimationFrame(scanQrCode), 3000); // Wait 3 seconds before next scan
+            setTimeout(() => requestAnimationFrame(scanQrCode), 3000);
         }
 
         // Update log activity section
@@ -320,7 +269,7 @@
                 <span><strong>Location:</strong> (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})</span>
             `;
             logActivity.appendChild(entryDiv);
-            logActivity.scrollTop = logActivity.scrollHeight; // Autoscroll to bottom
+            logActivity.scrollTop = logActivity.scrollHeight;
         }
 
         // Load log from JSON file
@@ -335,7 +284,6 @@
                     if (!Array.isArray(loadedLog)) {
                         throw new Error('Invalid JSON format: Must be an array');
                     }
-                    // Validate each log entry
                     for (const entry of loadedLog) {
                         if (!entry.url || !entry.timestamp || !entry.geolocation || 
                             typeof entry.geolocation.latitude !== 'number' || 
