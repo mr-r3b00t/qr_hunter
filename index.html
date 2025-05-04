@@ -112,7 +112,7 @@
         }
 
         // Scan QR code
-        function scanQRCode() {
+        function scanQrCode() {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -123,15 +123,15 @@
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
-                processQRCode(code.data);
+                processQrCode(code.data);
             } else {
                 output.textContent = 'No QR code detected. Keep scanning...';
-                requestAnimationFrame(scanQRCode);
+                requestAnimationFrame(scanQrCode);
             }
         }
 
         // Process detected QR code
-        async function processQRCode(url) {
+        async function processQrCode(url) {
             try {
                 const geo = await getGeolocation();
                 const timestamp = new Date().toISOString();
@@ -147,7 +147,7 @@
             } catch (err) {
                 output.textContent = err;
             }
-            setTimeout(() => requestAnimationFrame(scanQRCode), 1000); // Delay before next scan
+            setTimeout(() => requestAnimationFrame(scanQrCode), 3000); // Wait 3 seconds before next scan
         }
 
         // Update log activity section
@@ -208,7 +208,7 @@
         // Initialize
         startCamera();
         video.addEventListener('loadedmetadata', () => {
-            requestAnimationFrame(scanQRCode);
+            requestAnimationFrame(scanQrCode);
         });
     </script>
 </body>
