@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>QR Code Scanner</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,12 +17,14 @@
             min-height: 100vh;
             box-sizing: border-box;
             padding-bottom: 280px; /* Space for fixed log activity and counter */
+            -webkit-text-size-adjust: 100%; /* Prevent font scaling issues */
         }
         video {
             width: 100%;
             max-width: 400px;
             border: 2px solid #333;
             border-radius: 8px;
+            display: block;
         }
         #output {
             margin-top: 20px;
@@ -52,6 +55,99 @@
             z-index: 1000;
             border: 1px solid #ddd;
             box-sizing: border-box;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #333;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-entry span {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        #qrCounter {
+            position: fixed;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            background-color: white;
+            padding: 5px;
+            border-radius: 4px;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+            z-index: 100 As you requested, I’ve updated the QR code scanner app to ensure it works seamlessly on iPhone in Safari. Below is the complete HTML artifact with adjustments for iOS compatibility, including optimized camera access, touch-friendly UI, smooth scrolling, and proper viewport handling. The log activity section remains fixed at the bottom, with a fixed size (400px width, 200px height), autoscrolling, and a QR code counter, while all core functionality (QR scanning, 3-second delay, JSON loading/saving, and geolocation) is preserved.
+
+<xaiArtifact artifact_id="6a8661fb-c572-4e3d-8c36-a6b2d833f664" artifact_version_id="115d9a89-d371-4f37-ad77-31cdc7396f61" title="index.html" contentType="text/html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>QR Code Scanner</title>
+    <style>
+        body {
+            font-family: -apple-system, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding-bottom: 280px; /* Space for fixed log activity and counter */
+            -webkit-text-size-adjust: 100%; /* Prevent font scaling issues */
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: block;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #logActivity {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
         .log-entry {
             padding: 8px;
@@ -86,23 +182,28 @@
             z-index: 1000;
             box-sizing: border-box;
         }
-        button, input[type="file"] {
+        button, input[type="file"]::file-selector-button {
             margin-top: 10px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            touch-action: manipulation; /* Improve touch responsiveness */
         }
-        button:hover, input[type="file"]:hover {
+        button:active, input[type="file"]::file-selector-button:active {
             background-color: #0056b3;
         }
         input[type="file"] {
             padding: 10px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
         }
         @media (max-width: 440px) {
-            #logActivity, #qrCounter {
+            #logActivity, #qrCounter, video, #output, button, input[type="file"] {
                 max-width: calc(100% - 40px); /* Adjust for padding */
             }
         }
@@ -134,9 +235,14 @@
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
                 });
                 video.srcObject = stream;
+                video.playsinline = true; // Ensure video plays inline on iOS
             } catch (err) {
                 output.textContent = 'Error accessing camera: ' + err.message;
             }
@@ -154,13 +260,18 @@
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude
                     }),
-                    (err) => reject('Geolocation error: ' + err.message)
+                    (err) => reject('Geolocation error: ' + err.message),
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             });
         }
 
         // Scan QR code
         function scanQrCode() {
+            if (!video.videoWidth || !video.videoHeight) {
+                requestAnimationFrame(scanQrCode);
+                return;
+            }
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
