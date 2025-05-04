@@ -13,6 +13,9 @@
             margin: 0;
             padding: 20px;
             background-color: #f0f0f0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding-bottom: 280px; /* Space for fixed log activity and counter */
         }
         video {
             width: 100%;
@@ -29,25 +32,59 @@
             width: 100%;
             max-width: 400px;
             text-align: center;
+            box-sizing: border-box;
         }
         #logActivity {
-            margin-top: 20px;
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             padding: 10px;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
-            max-height: 200px;
+            height: 200px;
             overflow-y: auto;
             font-size: 14px;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
         }
         .log-entry {
+            padding: 8px;
             border-bottom: 1px solid #eee;
-            padding: 5px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #333;
         }
         .log-entry:last-child {
             border-bottom: none;
+        }
+        .log-entry span {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        #qrCounter {
+            position: fixed;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            background-color: white;
+            padding: 5px;
+            border-radius: 4px;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+            z-index: 1000;
+            box-sizing: border-box;
         }
         button, input[type="file"] {
             margin-top: 10px;
@@ -64,23 +101,34 @@
         input[type="file"] {
             padding: 10px;
         }
+        @media (max-width: 440px) {
+            #logActivity, #qrCounter {
+                max-width: calc(100% - 40px); /* Adjust for padding */
+            }
+        }
     </style>
 </head>
 <body>
     <h1>QR Code Scanner</h1>
     <video id="video" autoplay playsinline></video>
     <div id="output">Scanning for QR code...</div>
-    <h2>Log Activity</h2>
-    <div id="logActivity"></div>
     <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
     <button onclick="saveLogToJson()">Save Log to JSON</button>
+    <div id="qrCounter">QR Codes Scanned: 0</div>
+    <div id="logActivity"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         const video = document.getElementById('video');
         const output = document.getElementById('output');
         const logActivity = document.getElementById('logActivity');
+        const qrCounter = document.getElementById('qrCounter');
         const log = [];
+
+        // Update QR code counter
+        function updateQrCounter() {
+            qrCounter.textContent = `QR Codes Scanned: ${log.length}`;
+        }
 
         // Start the camera
         async function startCamera() {
@@ -143,6 +191,7 @@
                 log.push(logEntry);
                 output.textContent = `Scanned QR Code:\nURL: ${url}\nTime: ${timestamp}\nLocation: (${geo.latitude}, ${geo.longitude})`;
                 updateLogActivity(logEntry);
+                updateQrCounter();
                 console.log('Log entry added:', logEntry);
             } catch (err) {
                 output.textContent = err;
@@ -154,7 +203,11 @@
         function updateLogActivity(logEntry) {
             const entryDiv = document.createElement('div');
             entryDiv.className = 'log-entry';
-            entryDiv.textContent = `URL: ${logEntry.url}, Time: ${logEntry.timestamp}, Location: (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})`;
+            entryDiv.innerHTML = `
+                <span><strong>URL:</strong> ${logEntry.url}</span>
+                <span><strong>Time:</strong> ${logEntry.timestamp}</span>
+                <span><strong>Location:</strong> (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})</span>
+            `;
             logActivity.appendChild(entryDiv);
             logActivity.scrollTop = logActivity.scrollHeight; // Autoscroll to bottom
         }
@@ -181,6 +234,7 @@
                         log.push(entry);
                         updateLogActivity(entry);
                     }
+                    updateQrCounter();
                     output.textContent = `Loaded ${loadedLog.length} log entries. Scanning for QR code...`;
                 } catch (err) {
                     output.textContent = 'Error loading JSON: ' + err.message;
