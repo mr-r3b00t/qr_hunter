@@ -16,7 +16,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 280px; /* Space for fixed log and counter */
+            padding-bottom: 280px;
             -webkit-text-size-adjust: 100%;
         }
         header {
@@ -157,7 +157,7 @@
         <h1>QR Code Scanner</h1>
     </header>
     <div class="main-content">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" autoplay muted playsinline></video>
         <div id="output">Scanning for QR code...</div>
         <div class="controls">
             <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
@@ -186,14 +186,16 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
                     } 
                 });
                 video.srcObject = stream;
-                video.playsinline = true;
+                video.setAttribute('autoplay', '');
+                video.setAttribute('muted', '');
+                video.setAttribute('playsinline', '');
             } catch (err) {
-                output.textContent = 'Error accessing camera: ' + err.message;
+                output.textContent = 'Camera access failed: ' + err.message + '. Please ensure camera permissions are granted in Safari settings.';
             }
         }
 
@@ -224,7 +226,7 @@
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
-ższego
+            canvas.height = video.videoHeight;
 
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
