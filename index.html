@@ -16,7 +16,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 280px;
             -webkit-text-size-adjust: 100%;
         }
         header {
@@ -92,23 +91,35 @@
             max-width: 200px;
             box-sizing: border-box;
         }
-        #logActivity {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px;
-            background-color: #ffffff;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        .log-section {
             width: 100%;
             max-width: 400px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #qrCounter {
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            background-color: #ffffff;
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        #logActivity {
+            width: 100%;
             height: 200px;
             overflow-y: auto;
             font-size: 14px;
-            z-index: 1000;
             border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 10px;
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
         }
@@ -127,26 +138,8 @@
             font-size: 13px;
             line-height: 1.4;
         }
-        #qrCounter {
-            position: fixed;
-            bottom: 220px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            background-color: #ffffff;
-            padding: 8px;
-            border-radius: 6px;
-            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
-            z-index: 1000;
-            box-sizing: border-box;
-        }
         @media (max-width: 440px) {
-            .main-content, #logActivity, #qrCounter, video, #output, .controls {
+            .main-content, .log-section, video, #output, .controls {
                 max-width: calc(100% - 40px);
             }
         }
@@ -162,10 +155,13 @@
         <div class="controls">
             <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
             <button onclick="saveLogToJson()">Save Log to JSON</button>
+            <button onclick="clearLog()">Clear Log</button>
         </div>
     </div>
-    <div id="qrCounter">QR Codes Scanned: 0</div>
-    <div id="logActivity"></div>
+    <div class="log-section">
+        <div id="qrCounter">QR Codes Scanned: 0</div>
+        <div id="logActivity"></div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
@@ -178,6 +174,14 @@
         // Update QR code counter
         function updateQrCounter() {
             qrCounter.textContent = `QR Codes Scanned: ${log.length}`;
+        }
+
+        // Clear log
+        function clearLog() {
+            log.length = 0; // Clear the log array
+            logActivity.innerHTML = ''; // Clear the log activity section
+            updateQrCounter(); // Update the counter to 0
+            output.textContent = 'Log cleared. Scanning for QR code...';
         }
 
         // Start the camera
@@ -217,6 +221,16 @@
             });
         }
 
+        // Capture low-resolution base64 image
+        function captureLowResImage() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 320;
+            canvas.height = 240;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.5); // JPEG with 50% quality
+        }
+
         // Scan QR code
         function scanQrCode() {
             if (!video.videoWidth || !video.videoHeight) {
@@ -245,10 +259,12 @@
             try {
                 const geo = await getGeolocation();
                 const timestamp = new Date().toISOString();
+                const imageBase64 = captureLowResImage();
                 const logEntry = {
                     url,
                     timestamp,
-                    geolocation: geo
+                    geolocation: geo,
+                    imageBase64
                 };
                 log.push(logEntry);
                 output.textContent = `Scanned QR Code:\nURL: ${url}\nTime: ${timestamp}\nLocation: (${geo.latitude}, ${geo.longitude})`;
@@ -292,6 +308,7 @@
                             typeof entry.geolocation.longitude !== 'number') {
                             throw new Error('Invalid log entry format');
                         }
+                        // Allow optional imageBase64 field
                         log.push(entry);
                         updateLogActivity(entry);
                     }
