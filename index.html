@@ -199,8 +199,38 @@
         function clearLog() {
             log.length = 0;
             logActivity.innerHTML = '';
+            localStorage.removeItem('qrLog'); // Clear localStorage
             updateQrCounter();
             output.textContent = 'Log cleared. Scanning for QR code...';
+        }
+
+        // Load log from localStorage
+        function loadLogFromStorage() {
+            const savedLog = localStorage.getItem('qrLog');
+            if (savedLog) {
+                try {
+                    const loadedLog = JSON.parse(savedLog);
+                    if (!Array.isArray(loadedLog)) {
+                        throw new Error('Invalid localStorage data: Must be an array');
+                    }
+                    for (const entry of loadedLog) {
+                        if (!entry.url || !entry.timestamp || !entry.geolocation || 
+                            typeof entry.geolocation.latitude !== 'number' || 
+                            typeof entry.geolocation.longitude !== 'number') {
+                            throw new Error('Invalid log entry format in localStorage');
+                        }
+                        log.push(entry);
+                        updateLogActivity(entry);
+                    }
+                    updateQrCounter();
+                    if (loadedLog.length > 0) {
+                        output.textContent = `Loaded ${loadedLog.length} log entries from storage. Scanning for QR code...`;
+                    }
+                } catch (err) {
+                    output.textContent = 'Error loading log from storage: ' + err.message;
+                    localStorage.removeItem('qrLog'); // Clear corrupted data
+                }
+            }
         }
 
         // Start the camera
@@ -301,6 +331,8 @@
                 updateLogActivity(logEntry);
                 updateQrCounter();
                 console.log('Log entry added:', logEntry);
+                // Save to localStorage
+                localStorage.setItem('qrLog', JSON.stringify(log));
 
                 // Save high-res image
                 fullResCanvas.toBlob((blob) => {
@@ -373,6 +405,7 @@
                     }
                     logActivity.scrollTop = logActivity.scrollHeight;
                     updateQrCounter();
+                    localStorage.setItem('qrLog', JSON.stringify(log)); // Update localStorage
                     output.textContent = `Loaded ${loadedLog.length} log entries. Scanning for QR code...`;
                 } catch (err) {
                     output.textContent = 'Error loading JSON: ' + err.message;
@@ -398,6 +431,7 @@
         }
 
         // Initialize
+        loadLogFromStorage();
         startCamera();
         video.addEventListener('loadedmetadata', () => {
             requestAnimationFrame(scanQrCode);
