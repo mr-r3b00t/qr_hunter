@@ -7,51 +7,80 @@
     <title>QR Code Scanner</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f0f0f0;
+            background-color: #f8f9fa;
+            color: #333333;
         }
         header {
-            background-color: #333;
+            background-color: #333333;
             color: white;
             width: 100%;
             text-align: center;
-            padding: 10px 0;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .main-content {
             margin: 20px;
             text-align: center;
+            width: 100%;
+            max-width: 640px;
         }
         video {
             width: 100%;
             max-width: 640px;
             height: auto;
             background: black;
+            border-radius: 10px;
+            border: 2px solid #666666;
         }
         #output {
             margin-top: 10px;
             font-size: 16px;
-            color: #333;
+            color: #333333;
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
         }
         .controls {
             margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
         .controls button, .controls input {
-            padding: 5px 10px;
-            margin: 0 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #666666;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .controls button:hover, .controls input:hover {
+            background-color: #444444;
         }
         .log-section {
             width: 90%;
             max-width: 640px;
             margin: 20px 0;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
         }
         #qrCounter {
             font-weight: bold;
             margin-bottom: 10px;
+            color: #333333;
         }
         #logActivity {
             border: 1px solid #ccc;
@@ -59,13 +88,27 @@
             max-height: 200px;
             overflow-y: auto;
             background: white;
+            border-radius: 5px;
         }
         .log-entry {
             margin-bottom: 10px;
             font-size: 14px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
         }
         .log-entry span {
             display: block;
+        }
+        @media (max-width: 768px) {
+            .main-content, .log-section {
+                width: 95%;
+            }
+            .controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
