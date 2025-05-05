@@ -7,155 +7,65 @@
     <title>QR Code Scanner</title>
     <style>
         body {
-            font-family: -apple-system, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f7fa;
-            min-height: 100vh;
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
-            -webkit-text-size-adjust: 100%;
+            background-color: #f0f0f0;
         }
         header {
+            background-color: #333;
+            color: white;
             width: 100%;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 15px 0;
             text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 500;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #333;
+            padding: 10px 0;
         }
         .main-content {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
+            margin: 20px;
+            text-align: center;
         }
         video {
             width: 100%;
-            max-width: 400px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background-color: #000;
-            display: block;
+            max-width: 640px;
+            height: auto;
+            background: black;
         }
         #output {
-            padding: 12px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            text-align: center;
-            font-size: 14px;
+            margin-top: 10px;
+            font-size: 16px;
             color: #333;
-            box-sizing: border-box;
         }
         .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-            align-items: center;
+            margin-top: 10px;
         }
-        button, input[type="file"]::file-selector-button {
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            max-width: 200px;
-            text-align: center;
-            touch-action: manipulation;
-        }
-        button:active, input[type="file"]::file-selector-button:active {
-            background-color: #0056b3;
-        }
-        input[type="file"] {
-            padding: 10px;
-            width: 100%;
-            max-width: 200px;
-            box-sizing: border-box;
+        .controls button, .controls input {
+            padding: 5px 10px;
+            margin: 0 5px;
         }
         .log-section {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: 90%;
+            max-width: 640px;
+            margin: 20px 0;
         }
         #qrCounter {
-            width: 100%;
-            text-align: center;
-            font-size: 16px;
             font-weight: bold;
-            color: #333;
-            background-color: #ffffff;
-            padding: 8px;
-            border-radius: 6px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            box-sizing: border-box;
+            margin-bottom: 10px;
         }
         #logActivity {
-            width: 100%;
-            height: 200px;
-            overflow-y: auto;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #ffffff;
+            border: 1px solid #ccc;
             padding: 10px;
-            box-sizing: border-box;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #888 #f1f1f1;
-        }
-        #logActivity::-webkit-scrollbar {
-            width: 10px;
-        }
-        #logActivity::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        #logActivity::-webkit-scrollbar-thumb {
-            background: #888;
-        }
-        #logActivity::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
         }
         .log-entry {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #333;
-        }
-        .log-entry:last-child {
-            border-bottom: none;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
         .log-entry span {
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        @media (max-width: 440px) {
-            .main-content, .log-section, video, #output, .controls {
-                max-width: calc(100% - 40px);
-            }
+            display: block;
         }
     </style>
 </head>
@@ -213,7 +123,7 @@
                 video.setAttribute('muted', '');
                 video.setAttribute('playsinline', '');
             } catch (err) {
-                output.textContent = 'Camera access failed: ' + err.message + '. Please ensure camera permissions are granted in Safari settings.';
+                output.textContent = 'Camera access failed: ' + err.message + '. Please ensure camera permissions are granted.';
             }
         }
 
@@ -235,16 +145,6 @@
             });
         }
 
-        // Capture low-resolution base64 image
-        function captureLowResImage() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = 320;
-            canvas.height = 240;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', 0.5);
-        }
-
         // Scan QR code
         function scanQrCode() {
             if (!video.videoWidth || !video.videoHeight) {
@@ -261,7 +161,7 @@
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
-                processQrCode(code.data);
+                processQrCode(code.data, canvas);
             } else {
                 output.textContent = 'No QR code detected. Keep scanning...';
                 requestAnimationFrame(scanQrCode);
@@ -269,35 +169,50 @@
         }
 
         // Process detected QR code
-        async function processQrCode(url) {
+        async function processQrCode(url, fullResCanvas) {
             try {
                 const geo = await getGeolocation();
                 const timestamp = new Date().toISOString();
-                const imageBase64 = captureLowResImage();
+                // Create low-res image for log
+                const lowResCanvas = document.createElement('canvas');
+                lowResCanvas.width = 320;
+                lowResCanvas.height = 240;
+                const lowResContext = lowResCanvas.getContext('2d');
+                lowResContext.drawImage(fullResCanvas, 0, 0, lowResCanvas.width, lowResCanvas.height);
+                const lowResDataURL = lowResCanvas.toDataURL('image/jpeg', 0.5);
                 const logEntry = {
                     url,
                     timestamp,
                     geolocation: geo,
-                    imageBase64
+                    imageBase64: lowResDataURL
                 };
                 log.push(logEntry);
                 output.textContent = `Scanned QR Code:\nURL: ${url}\nTime: ${timestamp}\nLocation: (${geo.latitude}, ${geo.longitude})`;
                 updateLogActivity(logEntry);
                 updateQrCounter();
                 console.log('Log entry added:', logEntry);
+
+                // Save high-res image
+                fullResCanvas.toBlob((blob) => {
+                    const filename = `QRhunt${timestamp.replace(/:/g, '-')}.jpg`;
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                }, 'image/jpeg', 0.9);
             } catch (err) {
                 output.textContent = err;
             }
             setTimeout(() => requestAnimationFrame(scanQrCode), 3000);
         }
 
-        // Update log activity section with safe DOM manipulation
+        // Update log activity section
         function updateLogActivity(logEntry) {
             const isScrolledToBottom = logActivity.scrollHeight - logActivity.clientHeight <= logActivity.scrollTop + 1;
             const entryDiv = document.createElement('div');
             entryDiv.className = 'log-entry';
 
-            // Create URL span safely
             const urlSpan = document.createElement('span');
             const urlStrong = document.createElement('strong');
             urlStrong.textContent = 'URL:';
@@ -305,7 +220,6 @@
             urlSpan.appendChild(document.createTextNode(' ' + logEntry.url));
             entryDiv.appendChild(urlSpan);
 
-            // Create Time span safely
             const timeSpan = document.createElement('span');
             const timeStrong = document.createElement('strong');
             timeStrong.textContent = 'Time:';
@@ -313,7 +227,6 @@
             timeSpan.appendChild(document.createTextNode(' ' + logEntry.timestamp));
             entryDiv.appendChild(timeSpan);
 
-            // Create Location span safely
             const locationSpan = document.createElement('span');
             const locationStrong = document.createElement('strong');
             locationStrong.textContent = 'Location:';
