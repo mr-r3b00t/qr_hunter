@@ -11,6 +11,6 @@ https://mr-r3b00t.github.io/qr_hunter/hunter_timeline.html
 
 https://mr-r3b00t.github.io/qr_hunter/combine.html
 
-in dev.
+in dev. Thanks to Duckie for finding some vulns (https://x.com/SchizoDuckie)
 
 Version 0.1
