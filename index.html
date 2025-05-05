@@ -41,164 +41,296 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scan Log Timeline</title>
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>QR Code Scanner</title>
     <style>
         body {
-            background-color: #f3f4f6;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
         }
-        .timeline-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        header {
+            background-color: #333;
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
         }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 20px;
-            padding-left: 40px;
+        .main-content {
+            margin: 20px;
+            text-align: center;
         }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background-color: #3b82f6;
+        video {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            background: black;
         }
-        .timeline-dot {
-            position: absolute;
-            left: 8px;
-            top: 10px;
-            width: 16px;
-            height: 16px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            border: 2px solid #ffffff;
+        #output {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
         }
-        .upload-container {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .controls {
+            margin-top: 10px;
+        }
+        .controls button, .controls input {
+            padding: 5px 10px;
+            margin: 0 5px;
+        }
+        .log-section {
+            width: 90%;
+            max-width: 640px;
+            margin: 20px 0;
+        }
+        #qrCounter {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #logActivity {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .log-entry span {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        function TimelineItem({ entry }) {
-            const date = new Date(entry.timestamp).toLocaleString();
-            const mapUrl = `https://www.google.com/maps?q=${entry.geolocation.latitude},${entry.geolocation.longitude}`;
+    <header>
+        <h1>QR Code Scanner</h1>
+    </header>
+    <div class="main-content">
+        <video id="video" autoplay muted playsinline></video>
+        <div id="output">Scanning for QR code...</div>
+        <div class="controls">
+            <input type="file" id="loadLog" accept=".json" onchange="loadLogFromJson(event)">
+            <button onclick="saveLogToJson()">Save Log to JSON</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+    <div class="log-section">
+        <div id="qrCounter">QR Codes Scanned: 0</div>
+        <div id="logActivity"></div>
+    </div>
 
-            return (
-                <div className="timeline-item">
-                    <div className="timeline-dot"></div>
-                    <div className="bg-white shadow-lg rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900">{date}</h3>
-                        <div className="mt-4">
-                            <p className="text-gray-700"><strong>URL:</strong> <a href={entry.url} target="_blank" className="text-blue-600 hover:underline">{entry.url}</a></p>
-                            <p className="text-gray-700"><strong>Location:</strong> 
-                                <a href={mapUrl} target="_blank" className="text-blue-600 hover:underline">
-                                    {entry.geolocation.latitude}, {entry.geolocation.longitude}
-                                </a>
-                            </p>
-                        </div>
-                        {entry.imageBase64 && (
-                            <div className="mt-4">
-                                <img 
-                                    src={entry.imageBase64} 
-                                    alt="QR Code" 
-                                    className="max-w-full h-auto rounded-lg border border-gray-200"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const output = document.getElementById('output');
+        const logActivity = document.getElementById('logActivity');
+        const qrCounter = document.getElementById('qrCounter');
+        const log = [];
+
+        // Update QR code counter
+        function updateQrCounter() {
+            qrCounter.textContent = `QR Codes Scanned: ${log.length}`;
         }
 
-        function App() {
-            const [data, setData] = React.useState([]);
-            const [error, setError] = React.useState(null);
+        // Clear log
+        function clearLog() {
+            log.length = 0;
+            logActivity.innerHTML = '';
+            updateQrCounter();
+            output.textContent = 'Log cleared. Scanning for QR code...';
+        }
 
-            const handleFileUpload = (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    if (file.type !== 'application/json') {
-                        setError('Please upload a valid JSON file.');
-                        setData([]);
-                        return;
+        // Start the camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                video.srcObject = stream;
+                video.setAttribute('autoplay', '');
+                video.setAttribute('muted', '');
+                video.setAttribute('playsinline', '');
+            } catch (err) {
+                output.textContent = 'Camera access failed: ' + err.message + '. Please ensure camera permissions are granted.';
+            }
+        }
+
+        // Get geolocation
+        async function getGeolocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation not supported');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }),
+                    (err) => reject('Geolocation error: ' + err.message),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+
+        // Scan QR code
+        function scanQrCode() {
+            if (!video.videoWidth || !video.videoHeight) {
+                requestAnimationFrame(scanQrCode);
+                return;
+            }
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                processQrCode(code.data, canvas);
+            } else {
+                output.textContent = 'No QR code detected. Keep scanning...';
+                requestAnimationFrame(scanQrCode);
+            }
+        }
+
+        // Process detected QR code
+        async function processQrCode(url, fullResCanvas) {
+            try {
+                const geo = await getGeolocation();
+                const timestamp = new Date().toISOString();
+                // Create low-res image for log
+                const lowResCanvas = document.createElement('canvas');
+                lowResCanvas.width = 320;
+                lowResCanvas.height = 240;
+                const lowResContext = lowResCanvas.getContext('2d');
+                lowResContext.drawImage(fullResCanvas, 0, 0, lowResCanvas.width, lowResCanvas.height);
+                const lowResDataURL = lowResCanvas.toDataURL('image/jpeg', 0.5);
+                const logEntry = {
+                    url,
+                    timestamp,
+                    geolocation: geo,
+                    imageBase64: lowResDataURL
+                };
+                log.push(logEntry);
+                output.textContent = `Scanned QR Code:\nURL: ${url}\nTime: ${timestamp}\nLocation: (${geo.latitude}, ${geo.longitude})`;
+                updateLogActivity(logEntry);
+                updateQrCounter();
+                console.log('Log entry added:', logEntry);
+
+                // Save high-res image
+                fullResCanvas.toBlob((blob) => {
+                    const filename = `QRhunt${timestamp.replace(/:/g, '-')}.jpg`;
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                }, 'image/jpeg', 0.9);
+            } catch (err) {
+                output.textContent = err;
+            }
+            setTimeout(() => requestAnimationFrame(scanQrCode), 3000);
+        }
+
+        // Update log activity section
+        function updateLogActivity(logEntry) {
+            const isScrolledToBottom = logActivity.scrollHeight - logActivity.clientHeight <= logActivity.scrollTop + 1;
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'log-entry';
+
+            const urlSpan = document.createElement('span');
+            const urlStrong = document.createElement('strong');
+            urlStrong.textContent = 'URL:';
+            urlSpan.appendChild(urlStrong);
+            urlSpan.appendChild(document.createTextNode(' ' + logEntry.url));
+            entryDiv.appendChild(urlSpan);
+
+            const timeSpan = document.createElement('span');
+            const timeStrong = document.createElement('strong');
+            timeStrong.textContent = 'Time:';
+            timeSpan.appendChild(timeStrong);
+            timeSpan.appendChild(document.createTextNode(' ' + logEntry.timestamp));
+            entryDiv.appendChild(timeSpan);
+
+            const locationSpan = document.createElement('span');
+            const locationStrong = document.createElement('strong');
+            locationStrong.textContent = 'Location:';
+            locationSpan.appendChild(locationStrong);
+            locationSpan.appendChild(document.createTextNode(` (${logEntry.geolocation.latitude}, ${logEntry.geolocation.longitude})`));
+            entryDiv.appendChild(locationSpan);
+
+            logActivity.appendChild(entryDiv);
+            if (isScrolledToBottom) {
+                logActivity.scrollTop = logActivity.scrollHeight;
+            }
+        }
+
+        // Load log from JSON file
+        function loadLogFromJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedLog = JSON.parse(e.target.result);
+                    if (!Array.isArray(loadedLog)) {
+                        throw new Error('Invalid JSON format: Must be an array');
                     }
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const jsonData = JSON.parse(e.target.result);
-                            if (Array.isArray(jsonData)) {
-                                setData(jsonData);
-                                setError(null);
-                            } else {
-                                setError('JSON file must contain an array of entries.');
-                                setData([]);
-                            }
-                        } catch (err) {
-                            setError('Error parsing JSON file.');
-                            setData([]);
+                    for (const entry of loadedLog) {
+                        if (!entry.url || !entry.timestamp || !entry.geolocation || 
+                            typeof entry.geolocation.latitude !== 'number' || 
+                            typeof entry.geolocation.longitude !== 'number') {
+                            throw new Error('Invalid log entry format');
                         }
-                    };
-                    reader.readAsText(file);
+                        log.push(entry);
+                        updateLogActivity(entry);
+                    }
+                    logActivity.scrollTop = logActivity.scrollHeight;
+                    updateQrCounter();
+                    output.textContent = `Loaded ${loadedLog.length} log entries. Scanning for QR code...`;
+                } catch (err) {
+                    output.textContent = 'Error loading JSON: ' + err.message;
                 }
             };
-
-            return (
-                <div className="timeline-container">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">QR Scan Log Timeline</h1>
-                    <p className="text-gray-600 mb-8">
-                        <a 
-                            href="https://mr-r3b00t.github.io/qr_hunter/hunter_timeline.html" 
-                            target="_blank" 
-                            className="text-blue-600 hover:underline"
-                        >
-                            QR Hunter Timeline
-                        </a>
-                    </p>
-                    <div className="upload-container">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Upload JSON File
-                        </label>
-                        <input
-                            type="file"
-                            accept=".json"
-                            onChange={handleFileUpload}
-                            className="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-blue-50 file:text-blue-700
-                                hover:file:bg-blue-100"
-                        />
-                        {error && (
-                            <p className="mt-2 text-sm text-red-600">{error}</p>
-                        )}
-                    </div>
-                    {data.length > 0 ? (
-                        data.map((entry, index) => (
-                            <TimelineItem key={index} entry={entry} />
-                        ))
-                    ) : (
-                        <p className="text-gray-600">No data available. Please upload a JSON file.</p>
-                    )}
-                </div>
-            );
+            reader.readAsText(file);
         }
 
-        ReactDOM.render(<App />, document.getElementById('root'));
+        // Save log to JSON file
+        function saveLogToJson() {
+            if (log.length === 0) {
+                alert('No log entries to save.');
+                return;
+            }
+            const json = JSON.stringify(log, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qr_scan_log_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        startCamera();
+        video.addEventListener('loadedmetadata', () => {
+            requestAnimationFrame(scanQrCode);
+        });
     </script>
 </body>
 </html>
